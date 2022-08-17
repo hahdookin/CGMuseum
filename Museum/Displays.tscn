@@ -1,0 +1,373 @@
+[gd_scene load_steps=22 format=2]
+
+[ext_resource path="res://Shaders/TestMaterial.tres" type="Material" id=1]
+[ext_resource path="res://Assets/prototypes/uv_checker.png" type="Texture" id=2]
+[ext_resource path="res://Water.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Frames/SquareFrame.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Frames/FlatSquareCanvas.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Frames/SquareCanvas.tscn" type="PackedScene" id=6]
+[ext_resource path="res://Frames/RectFrame.tscn" type="PackedScene" id=7]
+[ext_resource path="res://InformationLabel/InformationLabel.tscn" type="PackedScene" id=8]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+//render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+
+uniform int u_iterations = 3; // Number of rectangles to draw
+uniform bool u_cycle_back = false;
+uniform float u_speed = 1.0; // Speed at which the animation happens
+uniform float u_precision_correction = 0.01;
+uniform float u_border_scale : hint_range(0, 1) = 1.0; // Border width is border_scale/iterations
+uniform vec4 u_background_color : hint_color = vec4(vec3(0), 1); // Color of pixels not in a rectangle
+uniform vec4 u_start_color : hint_color = vec4(1, 0, 0, 1);
+uniform vec4 u_end_color : hint_color = vec4(0, 0, 1, 1);
+
+uniform float u_fade_y : hint_range(0, 1) = 1.0;
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))*
+        43758.5453123);
+}
+
+// Determine whether fragment is in a rectangle
+// st -> fragment position in st coords ((0, 0) is bottom left, (1, 1) is top right)
+// pos -> rectangle's starting position in st coords
+// size -> rectangle's width & height
+// border -> border thickness of rectangle
+bool in_rectangle(vec2 st, vec2 pos, vec2 size, float border) {
+    vec2 inner_pos = pos + border;
+    vec2 inner_size = size - border * 2.0;
+    if (st.x >= pos.x && st.x <= pos.x + size.x && 
+        st.y >= pos.y && st.y <= pos.y + size.y) {
+        // Check if fragment is not in the inner rect formed by the border
+        if (!(st.x >= inner_pos.x && st.x <= inner_pos.x + inner_size.x && 
+        st.y >= inner_pos.y && st.y <= inner_pos.y + inner_size.y))
+            return true;
+    }
+    return false;
+}
+
+void fragment() {
+//    vec3 cam_world_pos = (CAMERA_MATRIX * vec4(vec3(0), 1.0)).xyz;
+//    vec3 vert_world_pos = (CAMERA_MATRIX * vec4(VERTEX, 1.0)).xyz;
+//    float dist_from_camera = distance(cam_world_pos, vert_world_pos);
+    
+    vec2 st = vec2(UV.x, 1.0 - UV.y); // (0, 0) BL (1, 1) TR
+    
+    // Create grid
+    st *= u_plane_size * u_scale;
+    float odd_row = step(1., mod(st.y,2.0));
+    float odd_col = step(1., mod(st.x,2.0));
+    vec2 ipos = floor(st);  // get the integer coords
+    st = fract(st);
+    // Rotate each grid
+    st = rotate2d(u_rotation_degrees * 3.14159 / 180.0) * (st - vec2(0.5)) + vec2(0.5);
+    
+    //vec2 fpos = fract(st);  // get the fractional coords
+
+	vec3 color = u_background_color.rgb;
+    // iters is n if not cycling back, otherwise its (n - 1) * 2
+    int iters = (1 - int(u_cycle_back)) * u_iterations + int(u_cycle_back) * (u_iterations - 1) * 2;
+    for (int i = 0; i < iters; i++) {
+        // Basically, size grows from 0 -> 1 while pos shrinks from 0.5 -> 0
+        // Shrinking equation: 0.5 - mod(s * x + i/n, 1) / 2.0
+        // Growing equation:   mod(s * x + i/n, 1)
+        float offset = float(i) / float(iters);
+        float progress = mod((TIME * u_speed + offset), 1); // mod(s * x + i/n, 1), goes from 0 -> 1
+        vec2 pos = vec2(0.5) - progress;
+        vec2 size = vec2(progress * 2.0);
+//        vec2 pos = vec2(0.5) - progress/2.0;
+//        vec2 size = vec2(progress);
+        float border = (1.0 / float(iters) + u_precision_correction) * u_border_scale;
+        bool in_rect = in_rectangle(st, pos, size, border);
+        
+        float color_offset = float(i) / float(iters - 1);
+        color = mix(u_start_color, u_end_color, color_offset).rgb * float(in_rect) + u_background_color.rgb * (1.0 - float(in_rect));
+        // Do color stuff
+        if (u_cycle_back) {
+            if (i <= iters / 2)
+                color = mix(u_start_color, u_end_color, float(i) / (float(u_iterations - 1))).rgb;
+            else
+                color = mix(u_end_color, u_start_color, (float(i) - float(iters) / 2.0) / (float(u_iterations - 1))).rgb;
+            if (!in_rect) {
+                color = u_background_color.rgb;
+            }
+        }
+        
+        if (in_rect) 
+            break;
+    }
+
+    ALBEDO = color;
+    
+    float fade_ipos = floor(u_fade_y * u_plane_size.y * u_scale.y);
+    float fade_fpos = fract(u_fade_y * u_plane_size.y * u_scale.y);
+    if (ipos.y > fade_ipos) ALBEDO = u_background_color.rgb;
+    else if (ipos.y < fade_ipos) ALBEDO = color;
+    else {
+        ALBEDO = mix(color, u_background_color.rgb, 1.0 - fade_fpos)
+    }
+}
+"
+
+[sub_resource type="ShaderMaterial" id=2]
+shader = SubResource( 1 )
+shader_param/u_plane_size = Vector2( 1, 1 )
+shader_param/u_scale = Vector2( 1, 1 )
+shader_param/u_rotation_degrees = 0.0
+shader_param/u_iterations = 8
+shader_param/u_cycle_back = true
+shader_param/u_speed = 0.2
+shader_param/u_precision_correction = 0.0
+shader_param/u_border_scale = 0.131
+shader_param/u_background_color = Color( 0, 0, 0, 1 )
+shader_param/u_start_color = Color( 0.0117647, 1, 0.501961, 1 )
+shader_param/u_end_color = Color( 1, 0, 0.619608, 1 )
+shader_param/u_fade_y = 1.0
+
+[sub_resource type="Shader" id=8]
+code = "shader_type spatial;
+
+//render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+uniform bool u_flip_x = false;
+uniform bool u_flip_y = false;
+
+uniform sampler2D u_noise;
+uniform sampler2D u_uv_checker;
+uniform float u_speed = 1.0;
+
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+void fragment() {
+    vec2 st = vec2(UV.x, 1.0 - UV.y);
+
+    // Create grid
+//    st *= u_plane_size * u_scale;
+//	st = fract(st);
+//    st -= vec2(0.5);
+//    st = rotate2d(radians(u_rotation_degrees)) * st;
+//    st += vec2(0.5);
+//    st.x = u_flip_x ? 1.0 - st.x : st.x;
+//    st.y = u_flip_y ? 1.0 - st.y : st.y;
+
+	vec3 colorA = texture(u_noise, (UV + TIME * u_speed) / 2.0).rgb;
+	vec3 colorB = texture(u_noise, (UV - TIME * u_speed * 0.5) / 2.0).rgb;
+    
+	ALBEDO = texture(u_noise, UV + (colorA.r * colorB.r + texture(u_noise, UV).r)).rgb;
+    ALBEDO *= vec3(1, 0, 1);
+}
+"
+
+[sub_resource type="OpenSimplexNoise" id=10]
+
+[sub_resource type="NoiseTexture" id=11]
+seamless = true
+noise = SubResource( 10 )
+
+[sub_resource type="ShaderMaterial" id=9]
+shader = SubResource( 8 )
+shader_param/u_plane_size = Vector2( 1, 1 )
+shader_param/u_scale = Vector2( 1, 1 )
+shader_param/u_rotation_degrees = 0.0
+shader_param/u_flip_x = false
+shader_param/u_flip_y = false
+shader_param/u_speed = 0.25
+shader_param/u_noise = SubResource( 11 )
+shader_param/u_uv_checker = ExtResource( 2 )
+
+[sub_resource type="ViewportTexture" id=13]
+viewport_path = NodePath("Viewport")
+
+[sub_resource type="SpatialMaterial" id=12]
+resource_local_to_scene = true
+albedo_texture = SubResource( 13 )
+
+[sub_resource type="Shader" id=3]
+code = "shader_type spatial;
+
+//render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))*
+        43758.5453123);
+}
+
+
+void fragment() {
+    vec2 st = vec2(UV.x, 1.0 - UV.y);
+
+    float rotation_radians = u_rotation_degrees * 3.14159 / 180.0;
+    st -= vec2(0.5);
+    st = rotate2d(rotation_radians) * st;
+    st += vec2(0.5);
+
+    // Create grid
+    st *= u_plane_size * u_scale;
+    
+//    float odd_row = step(1., mod(st.y,2.0));
+//    float odd_col = step(1., mod(st.x,2.0));
+//    st.x += odd_row;
+//    st.y += odd_col;
+//    st = fract(st);
+    vec2 ipos = floor(st);  // get the integer coords
+    vec2 fpos = fract(st);  // get the fractional coords
+
+	vec3 color = vec3(random( ipos + TIME / 1000.0));
+    
+	ALBEDO = color;
+}
+"
+
+[sub_resource type="ShaderMaterial" id=4]
+shader = SubResource( 3 )
+shader_param/u_plane_size = Vector2( 2, 1 )
+shader_param/u_scale = Vector2( 16, 16 )
+shader_param/u_rotation_degrees = 0.0
+
+[sub_resource type="ShaderMaterial" id=5]
+shader = SubResource( 1 )
+shader_param/u_plane_size = Vector2( 8, 4 )
+shader_param/u_scale = Vector2( 2, 2 )
+shader_param/u_rotation_degrees = 45.0
+shader_param/u_iterations = 3
+shader_param/u_cycle_back = true
+shader_param/u_speed = 0.2
+shader_param/u_precision_correction = 0.0
+shader_param/u_border_scale = 0.178
+shader_param/u_background_color = Color( 0, 0, 0, 1 )
+shader_param/u_start_color = Color( 0.0117647, 1, 0.501961, 1 )
+shader_param/u_end_color = Color( 1, 0, 0.619608, 1 )
+shader_param/u_fade_y = 1.0
+
+[sub_resource type="Shader" id=6]
+code = "shader_type spatial;
+
+//render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+uniform bool u_flip_x = false;
+uniform bool u_flip_y = false;
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+void fragment() {
+    vec2 st = vec2(UV.x, 1.0 - UV.y);
+
+    // Create grid
+    st *= u_plane_size * u_scale;
+	st = fract(st);
+    st -= vec2(0.5);
+    st = rotate2d(radians(u_rotation_degrees)) * st;
+    st += vec2(0.5);
+    st.x = u_flip_x ? 1.0 - st.x : st.x;
+    st.y = u_flip_y ? 1.0 - st.y : st.y;
+
+	vec3 color = vec3(st, 0.0);
+    
+	ALBEDO = color;
+}
+"
+
+[sub_resource type="ShaderMaterial" id=7]
+shader = SubResource( 6 )
+shader_param/u_plane_size = Vector2( 1, 1 )
+shader_param/u_scale = Vector2( 1, 1 )
+shader_param/u_rotation_degrees = 90.0
+shader_param/u_flip_x = false
+shader_param/u_flip_y = false
+
+[node name="Displays" type="Spatial"]
+
+[node name="square_frame" parent="." instance=ExtResource( 4 )]
+transform = Transform( -2.18557e-08, 0, 0.5, 0, 0.5, 0, -0.5, 0, -2.18557e-08, -5.31141, 2.29748, 4.47882 )
+material = SubResource( 2 )
+canvas_size = Vector2( 5, 5 )
+
+[node name="square_frame2" parent="." instance=ExtResource( 4 )]
+transform = Transform( 0.5, 0, 5.32907e-15, 0, 0.5, 0, -5.32907e-15, 0, 0.5, -9.29641, 2.29748, -0.419908 )
+material = SubResource( 9 )
+canvas_size = Vector2( 5, 5 )
+
+[node name="square_frame3" parent="." instance=ExtResource( 4 )]
+transform = Transform( 0.5, 0, 5.32907e-15, 0, 0.5, 0, -5.32907e-15, 0, 0.5, -9.29641, 2.29748, -4.98811 )
+material = SubResource( 12 )
+canvas_size = Vector2( 5, 5 )
+
+[node name="square_canvas" parent="." instance=ExtResource( 6 )]
+transform = Transform( 0.5, 0, 0, 0, -2.18557e-08, -0.5, 0, 0.5, -2.18557e-08, -9.91414, 2.23296, 0 )
+material = ExtResource( 1 )
+canvas_size = Vector2( 5.9, 5.9 )
+
+[node name="NoiseDisplay" type="Spatial" parent="."]
+
+[node name="Spatial2" parent="NoiseDisplay" instance=ExtResource( 8 )]
+transform = Transform( -1.09278e-08, 0, -0.25, 0, 0.25, 0, 0.25, 0, -1.09278e-08, -0.0972403, 1.4479, 2.71282 )
+title = "Noisy Garbage"
+desc = "The core of most computer grahpics. Controlled randomness with local similarity"
+year = "2002"
+year_offset = 1938
+
+[node name="rect_frame" parent="NoiseDisplay" instance=ExtResource( 7 )]
+transform = Transform( -0.4, 0, -6.03983e-08, 0, 0.4, 0, 6.03983e-08, 0, -0.4, -0.407302, 1.95332, -0.209771 )
+material = SubResource( 4 )
+canvas_size = Vector2( 8, 4 )
+
+[node name="LayDisplay" type="Spatial" parent="."]
+
+[node name="rect_frame2" parent="LayDisplay" instance=ExtResource( 7 )]
+transform = Transform( -0.05, 0.0866025, 8.74228e-09, 0.0866025, 0.05, 0, -4.37114e-09, 7.57103e-09, -0.1, -1.25442, 1.08052, -11.9952 )
+material = SubResource( 5 )
+canvas_size = Vector2( 8, 4 )
+
+[node name="flat_square_canvas" parent="LayDisplay" instance=ExtResource( 5 )]
+transform = Transform( -0.25, 0.433013, -4.37114e-08, 0.433013, 0.25, 0, 2.18557e-08, -3.78552e-08, -0.5, -1.24663, 1.04058, -13.2362 )
+material = SubResource( 7 )
+
+[node name="Spatial" parent="." instance=ExtResource( 3 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -8.195, 0, -21.7536 )

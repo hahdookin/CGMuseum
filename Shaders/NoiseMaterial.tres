@@ -1,0 +1,56 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+//render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))*
+        43758.5453123);
+}
+
+
+void fragment() {
+    vec2 st = vec2(UV.x, 1.0 - UV.y);
+
+    float rotation_radians = u_rotation_degrees * 3.14159 / 180.0;
+    st -= vec2(0.5);
+    st = rotate2d(rotation_radians) * st;
+    st += vec2(0.5);
+
+    // Create grid
+    st *= u_plane_size * u_scale;
+    
+//    float odd_row = step(1., mod(st.y,2.0));
+//    float odd_col = step(1., mod(st.x,2.0));
+//    st.x += odd_row;
+//    st.y += odd_col;
+//    st = fract(st);
+    vec2 ipos = floor(st);  // get the integer coords
+    vec2 fpos = fract(st);  // get the fractional coords
+
+	vec3 color = vec3(random( ipos + TIME / 1000.0));
+    
+	ALBEDO = color;
+}
+"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/u_plane_size = Vector2( 2, 1 )
+shader_param/u_scale = Vector2( 16, 16 )
+shader_param/u_rotation_degrees = 0.0

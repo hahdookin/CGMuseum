@@ -1,0 +1,78 @@
+[gd_scene load_steps=9 format=2]
+
+[ext_resource path="res://Assets/Arial/Arial_BoldItalic.tres" type="DynamicFont" id=3]
+[ext_resource path="res://InformationLabel/InformationLabel.gd" type="Script" id=4]
+[ext_resource path="res://Assets/Arial/arial.ttf" type="DynamicFontData" id=5]
+
+[sub_resource type="CubeMesh" id=1]
+size = Vector3( 2, 0.05, 1.5 )
+
+[sub_resource type="SpatialMaterial" id=6]
+roughness = 0.0
+
+[sub_resource type="DynamicFont" id=4]
+resource_local_to_scene = true
+size = 198
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=3]
+resource_local_to_scene = true
+size = 128
+font_data = ExtResource( 5 )
+
+[sub_resource type="DynamicFont" id=5]
+resource_local_to_scene = true
+size = 256
+font_data = ExtResource( 5 )
+
+[node name="Spatial" type="Spatial"]
+script = ExtResource( 4 )
+title = "Cool art piece"
+type = "Fragment shader"
+desc = "This is the desc! This is the desc! This is the desc! This is the desc! This is the desc! This is the desc! This is the desc! This is the desc!"
+year = "2001"
+add_comma = true
+year_offset = 1834
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, -1, 0, 1, -4.37114e-08, 0, 0, 0 )
+mesh = SubResource( 1 )
+material/0 = SubResource( 6 )
+
+[node name="TextPivot" type="Spatial" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.885999, 0.587911, 0.0269324 )
+
+[node name="Title" type="Label3D" parent="TextPivot"]
+pixel_size = 0.0005
+modulate = Color( 0, 0, 0, 1 )
+text = "Cool art piece,"
+font = ExtResource( 3 )
+horizontal_alignment = 0
+
+[node name="Type" type="Label3D" parent="TextPivot"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.167209, 0 )
+pixel_size = 0.0005
+modulate = Color( 0, 0, 0, 1 )
+text = "Fragment shader"
+font = SubResource( 4 )
+horizontal_alignment = 0
+
+[node name="Desc" type="Label3D" parent="TextPivot"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, -0.293466, 0 )
+pixel_size = 0.0005
+modulate = Color( 0, 0, 0, 1 )
+text = "This is the desc! This is the desc! This is the desc! This is the desc! This is the desc! This is the desc! This is the desc! This is the desc!"
+font = SubResource( 3 )
+horizontal_alignment = 0
+vertical_alignment = 0
+line_spacing = 30.0
+autowrap = true
+width = 3500.0
+
+[node name="Year" type="Label3D" parent="TextPivot"]
+pixel_size = 0.0005
+offset = Vector2( 1834, 0 )
+modulate = Color( 0, 0, 0, 1 )
+text = "2001"
+font = SubResource( 5 )
+horizontal_alignment = 0

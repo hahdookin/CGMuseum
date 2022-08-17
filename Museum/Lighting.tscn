@@ -1,0 +1,168 @@
+[gd_scene format=2]
+
+[node name="Lighting" type="Spatial"]
+
+[node name="SpotLight" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -2.09738, 5.1724, -12.6682 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight2" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -2.09738, 5.1724, -8.25623 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight3" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -7.20475, 5.1724, -12.6682 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight4" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -7.20475, 5.1724, -8.25623 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight5" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -2.09738, 5.1724, -1.87132 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight6" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -2.09738, 5.1724, 2.54064 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight7" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -7.20475, 5.1724, -1.87132 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight8" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, -7.20475, 5.1724, 2.54064 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight9" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 7.51841, 5.1724, -12.6682 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight10" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 7.51841, 5.1724, -8.25623 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight11" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 2.41104, 5.1724, -12.6682 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight12" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 2.41104, 5.1724, -8.25623 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight13" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 7.51841, 5.1724, -1.87132 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight14" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 7.51841, 5.1724, 2.54064 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight15" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 2.41104, 5.1724, -1.89977 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="SpotLight16" type="SpotLight" parent="."]
+transform = Transform( 1, 0, 0, 0, -4.37114e-08, 1, 0, -1, -4.37114e-08, 2.41104, 5.1724, 2.54064 )
+light_energy = 4.0
+shadow_bias = -0.005
+shadow_reverse_cull_face = true
+spot_range = 7.922
+spot_attenuation = 1.7411
+spot_angle = 77.53
+spot_angle_attenuation = 0.840897
+
+[node name="DirectionalLight" type="DirectionalLight" parent="."]
+transform = Transform( 0.251445, 0.892847, -0.373631, 0.134925, 0.349929, 0.927009, 0.958421, -0.283503, -0.0324792, -30.2916, 0.529573, -1.09847 )
+light_cull_mask = 4294966273
+shadow_enabled = true

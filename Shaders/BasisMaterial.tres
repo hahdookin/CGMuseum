@@ -1,0 +1,46 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+//render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+uniform bool u_flip_x = false;
+uniform bool u_flip_y = false;
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+void fragment() {
+    vec2 st = vec2(UV.x, 1.0 - UV.y);
+
+    // Create grid
+    st *= u_plane_size * u_scale;
+	st = fract(st);
+    st -= vec2(0.5);
+    st = rotate2d(radians(u_rotation_degrees)) * st;
+    st += vec2(0.5);
+    st.x = u_flip_x ? 1.0 - st.x : st.x;
+    st.y = u_flip_y ? 1.0 - st.y : st.y;
+
+	vec3 color = vec3(st, 0.0);
+    
+	ALBEDO = color;
+}
+"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/u_plane_size = Vector2( 1, 1 )
+shader_param/u_scale = Vector2( 1, 1 )
+shader_param/u_rotation_degrees = 0.0
+shader_param/u_flip_x = false
+shader_param/u_flip_y = false

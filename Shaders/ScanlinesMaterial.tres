@@ -1,0 +1,70 @@
+[gd_resource type="ShaderMaterial" load_steps=2 format=2]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+
+uniform float u_bar_width = 0.005;
+uniform float u_ends_length : hint_range(0, 1) = 0.2; // Proportion of the bar length that is the ends
+uniform vec4 u_color : hint_color = vec4(1);
+uniform float u_speed = 1.0;
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+void fragment() {
+    vec2 st = vec2(UV.x, 1.0 - UV.y);
+
+    // Create grid
+    st *= u_plane_size * u_scale;
+//	st = fract(st);
+    st = rotate2d(radians(u_rotation_degrees)) * (st - vec2(0.5)) + vec2(0.5);
+
+//	vec3 color = vec3(st, 0.0);
+    float pos = fract(TIME * u_speed);
+    vec3 color = vec3(0);
+    float solid_length = 1.0 - u_ends_length;
+//    float ends_length = (1.0 - solid_length) / 2.0;
+    float ends_length_whole = u_ends_length * u_bar_width;
+    float end_length_whole = ends_length_whole / 2.0;
+    float solid_length_whole = solid_length * u_bar_width;
+    
+    //color = vec3(step(pos, st.x) * (1.0 - step(pos + u_bar_width, st.x)));
+    
+    
+    if (st.x >= pos && st.x <= pos + u_bar_width) {
+        if (st.x >= pos + end_length_whole && st.x <= pos + end_length_whole + solid_length_whole) {
+            // On the inside portion of the bar
+            color = u_color.rgb;
+        } else {
+            // On the edges of the bar
+            if (st.x < pos + end_length_whole)
+                color = u_color.rgb * smoothstep(pos, pos + end_length_whole, st.x);
+            else
+                color = u_color.rgb * (1.0 - smoothstep(pos + end_length_whole + solid_length_whole, pos + u_bar_width, st.x));
+        }
+    }
+    
+	ALBEDO = color;
+}
+"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/u_plane_size = Vector2( 1, 1 )
+shader_param/u_scale = Vector2( 1, 1 )
+shader_param/u_rotation_degrees = 90.0
+shader_param/u_bar_width = 0.025
+shader_param/u_ends_length = 0.737
+shader_param/u_color = Color( 1, 1, 1, 1 )
+shader_param/u_speed = 1.0

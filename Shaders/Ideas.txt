@@ -1,0 +1,1 @@
++ Depth shader like portal 2 lights

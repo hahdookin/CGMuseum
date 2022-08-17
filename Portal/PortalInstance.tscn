@@ -1,0 +1,17 @@
+[gd_scene load_steps=4 format=2]
+
+[ext_resource path="res://Portal/Portal.gd" type="Script" id=1]
+[ext_resource path="res://Portal/StencilMeshMaterial.tres" type="Material" id=2]
+
+[sub_resource type="CubeMesh" id=16]
+resource_local_to_scene = true
+
+[node name="Portal" type="MeshInstance"]
+layers = 16
+mesh = SubResource( 16 )
+material/0 = ExtResource( 2 )
+script = ExtResource( 1 )
+current = true
+other_portal_path = NodePath("../Portal2")
+
+[node name="Helper" type="Spatial" parent="."]

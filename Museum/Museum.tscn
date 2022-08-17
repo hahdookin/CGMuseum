@@ -1,0 +1,22 @@
+[gd_scene load_steps=6 format=2]
+
+[ext_resource path="res://Player/Player.tscn" type="PackedScene" id=1]
+[ext_resource path="res://Museum/Test/Museum.glb" type="PackedScene" id=2]
+[ext_resource path="res://Museum/Lighting.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Museum/Displays.tscn" type="PackedScene" id=4]
+[ext_resource path="res://Museum/MuseumEnv.tres" type="Environment" id=7]
+
+[node name="Museum" instance=ExtResource( 2 )]
+
+[node name="InteriorWalls" parent="." index="0"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0.0372662, 0 )
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." index="14"]
+environment = ExtResource( 7 )
+
+[node name="Player" parent="." index="15" instance=ExtResource( 1 )]
+transform = Transform( -4.37114e-08, 0, -1, 0, 1, 0, 1, 0, -4.37114e-08, -4.63933, 1.35796, -13.4387 )
+
+[node name="Lighting" parent="." index="16" instance=ExtResource( 3 )]
+
+[node name="Displays" parent="." index="17" instance=ExtResource( 4 )]

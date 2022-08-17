@@ -1,0 +1,199 @@
+[gd_scene load_steps=15 format=2]
+
+[ext_resource path="res://Museum/Test2/Museum_post_bevel.glb" type="PackedScene" id=1]
+[ext_resource path="res://Museum/MuseumEnv.tres" type="Environment" id=2]
+[ext_resource path="res://Player/Player.tscn" type="PackedScene" id=3]
+[ext_resource path="res://Museum/Test2/Museum_post_bevel.lmbake" type="BakedLightmapData" id=4]
+[ext_resource path="res://Museum/LightFixture/LightFixture.tscn" type="PackedScene" id=5]
+[ext_resource path="res://Museum/LightBar/LightBar.tscn" type="PackedScene" id=6]
+[ext_resource path="res://Water.tscn" type="PackedScene" id=7]
+[ext_resource path="res://Portal/PortalInstance.tscn" type="PackedScene" id=8]
+
+[sub_resource type="Shader" id=62]
+code = "shader_type canvas_item;
+
+uniform sampler2D stencil_tex;
+
+void fragment() {
+//    vec2 uv = UV - 0.5;
+//    uv.x *= 1.85;
+//    float dist = sqrt(uv.x * uv.x + uv.y * uv.y);
+//    COLOR.rgb = texture(TEXTURE, UV).rgb;
+//    COLOR.a = smoothstep(0.5, 0.4, dist);
+    COLOR.rgb = texture(TEXTURE, UV).rgb;
+    COLOR.a = texture(stencil_tex, UV).g;
+}"
+
+[sub_resource type="ViewportTexture" id=55]
+viewport_path = NodePath("Player/StencilViewport")
+
+[sub_resource type="ShaderMaterial" id=56]
+resource_local_to_scene = true
+shader = SubResource( 62 )
+shader_param/stencil_tex = SubResource( 55 )
+
+[sub_resource type="ViewportTexture" id=57]
+viewport_path = NodePath("Player/PortalViewport")
+
+[sub_resource type="QuadMesh" id=3]
+size = Vector2( 2, 2 )
+
+[sub_resource type="CubeMesh" id=2]
+resource_local_to_scene = true
+
+[node name="Museum_post_bevel" instance=ExtResource( 1 )]
+
+[node name="Display_25x25x4" parent="." index="9"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.37612, 0, 0 )
+
+[node name="DisplayCase" parent="." index="11"]
+transform = Transform( -0.866025, -0.5, 8.15666e-08, -0.5, 0.866025, 2.18557e-08, -8.15666e-08, -2.18557e-08, -1, -0.0310817, 1.07164, -12.918 )
+
+[node name="Display_375x375x45" parent="." index="13"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 22.1434, 0.665407, -3.9116 )
+
+[node name="body" parent="." index="14"]
+transform = Transform( -0.000251329, -0.00398823, 1.31004e-09, 1.19094e-10, -1.90551e-09, -0.00399614, 0.00398823, -0.000251329, 0, 10.1384, 1.27177, -10.3169 )
+
+[node name="body001" parent="." index="15"]
+transform = Transform( -0.000251329, -0.00398823, 1.31004e-09, 1.19094e-10, -1.90551e-09, -0.00399614, 0.00398823, -0.000251329, 0, 10.1384, 1.27177, -10.3169 )
+
+[node name="collar" parent="." index="16"]
+transform = Transform( -0.000251329, -0.00398823, 1.31004e-09, 1.19094e-10, -1.90551e-09, -0.00399614, 0.00398823, -0.000251329, 0, 10.1384, 1.27177, -10.3169 )
+
+[node name="head" parent="." index="17"]
+transform = Transform( -0.000251329, -0.00398823, 1.31004e-09, 1.19094e-10, -1.90551e-09, -0.00399614, 0.00398823, -0.000251329, 0, 10.1893, 1.28957, -10.3137 )
+
+[node name="Ceiling" parent="." index="22"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.59505, -8.33976 )
+
+[node name="DirectionalLight" type="DirectionalLight" parent="." index="49"]
+transform = Transform( 0.0257218, 0.955459, -0.294001, -0.0832738, 0.295124, 0.951823, 0.996195, -2.24371e-08, 0.0871558, -22.1167, 26.7325, -14.2 )
+light_indirect_energy = 1.5
+shadow_enabled = true
+
+[node name="BakedLightmap" type="BakedLightmap" parent="." index="50"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5.3468, 3.4071, -8.36546 )
+extents = Vector3( 20.6191, 6.93196, 20.8206 )
+quality = 3
+bounces = 2
+bounce_indirect_energy = 0.5
+environment_mode = 3
+environment_custom_color = Color( 0, 0, 0, 1 )
+environment_custom_energy = 1.0
+light_data = ExtResource( 4 )
+
+[node name="WorldEnvironment" type="WorldEnvironment" parent="." index="51"]
+environment = ExtResource( 2 )
+
+[node name="LightBar" parent="." index="52" instance=ExtResource( 6 )]
+transform = Transform( -8.74228e-09, 0, 0.2, 0, 0.2, 0, -0.2, 0, -8.74228e-09, 16.8021, 5.20232, -1.16115 )
+
+[node name="LightBar2" parent="." index="53" instance=ExtResource( 6 )]
+transform = Transform( -8.74228e-09, 0, 0.2, 0, 0.2, 0, -0.2, 0, -8.74228e-09, 16.8021, 5.20232, -10.8999 )
+
+[node name="LightBar3" parent="." index="54" instance=ExtResource( 6 )]
+transform = Transform( -8.74228e-09, 0, 0.2, 0, 0.2, 0, -0.2, 0, -8.74228e-09, 5.63856, 5.285, -10.8999 )
+
+[node name="LightBar4" parent="." index="55" instance=ExtResource( 6 )]
+transform = Transform( -1.0411e-07, 0, -0.2, 0, 0.2, 0, 0.2, 0, -1.0411e-07, 2.51031, 5.20232, 0.355942 )
+
+[node name="LightBar5" parent="." index="56" instance=ExtResource( 6 )]
+transform = Transform( -1.0411e-07, 0, -0.2, 0, 0.2, 0, 0.2, 0, -1.0411e-07, 9.9777, 5.20232, 0.355942 )
+
+[node name="LightBar6" parent="." index="57" instance=ExtResource( 6 )]
+transform = Transform( -1.0411e-07, 0, -0.2, 0, 0.2, 0, 0.2, 0, -1.0411e-07, -6.13157, 5.20232, -13.5017 )
+
+[node name="LightBar7" parent="." index="58" instance=ExtResource( 6 )]
+transform = Transform( -1.0411e-07, 0, -0.2, 0, 0.2, 0, 0.2, 0, -1.0411e-07, -6.29098, 5.20232, -6.71994 )
+
+[node name="LightBar8" parent="." index="59" instance=ExtResource( 6 )]
+transform = Transform( -1.0411e-07, 0, -0.2, 0, 0.2, 0, 0.2, 0, -1.0411e-07, -3.59597, 5.16897, 1.28886 )
+
+[node name="Player" parent="." index="60" instance=ExtResource( 3 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35022, 1.40092, -18.2497 )
+
+[node name="TextureRect" parent="Player" index="5"]
+material = SubResource( 56 )
+texture = SubResource( 57 )
+
+[node name="LightFixture2" parent="." index="61" instance=ExtResource( 5 )]
+transform = Transform( 0.2, 0, 0, 0, 0.2, 0, 0, 0, 0.2, -3.61438, 5.41438, -12.9073 )
+
+[node name="Spatial" parent="LightFixture2" index="1"]
+transform = Transform( 0.561838, 0.827247, 0, -0.827247, 0.561838, 0, 0, 0, 1, -0.0289974, -1.2, 0.00800323 )
+
+[node name="SpotLight" parent="LightFixture2/Spatial" index="2"]
+transform = Transform( -1.41065e-06, 2.38419e-07, -5, 5.68434e-14, 5, 4.76837e-07, 5, 4.44089e-14, -1.41065e-06, 1.91407, -0.174938, 0 )
+light_bake_mode = 2
+
+[node name="LightFixture3" parent="." index="62" instance=ExtResource( 5 )]
+transform = Transform( -0.2, 0, -1.12852e-07, 0, 0.2, 0, 1.12852e-07, 0, -0.2, 15.0561, 5.41438, -1.75701 )
+
+[node name="Spatial" parent="LightFixture3" index="1"]
+transform = Transform( 0.351057, 0.936354, -1.5893e-08, -0.936354, 0.351057, -1.32978e-07, -1.18935e-07, 6.15643e-08, 1, -0.0289917, -1.2, 0.00800323 )
+
+[node name="SpotLight" parent="LightFixture3/Spatial" index="2"]
+transform = Transform( -1.41065e-06, 2.38419e-07, -5, 5.68434e-14, 5, 4.76837e-07, 5, 4.44089e-14, -1.41065e-06, 1.91407, -0.174938, 0 )
+
+[node name="LightFixture4" parent="." index="63" instance=ExtResource( 5 )]
+transform = Transform( 0.198648, 0, -0.0232184, 0, 0.2, 0, 0.0232184, 0, 0.198648, 18.6827, 5.41438, -4.42763 )
+
+[node name="Spatial" parent="LightFixture4" index="1"]
+transform = Transform( 0.561838, 0.827247, -7.45058e-09, -0.827247, 0.561838, 0, 7.45058e-09, 7.45058e-09, 1, -0.0289917, -1.2, 0.00800323 )
+
+[node name="SpotLight" parent="LightFixture4/Spatial" index="2"]
+transform = Transform( -1.37091e-06, 2.38419e-07, -5, -5.96046e-08, 5, 5.92321e-07, 5, -2.98023e-08, -1.43051e-06, 1.91407, -0.174942, 0 )
+
+[node name="LightFixture5" parent="." index="64" instance=ExtResource( 5 )]
+transform = Transform( 0.0232183, 0, 0.198648, 0, 0.2, 0, -0.198648, 0, 0.0232183, 6.10425, 5.41438, 3.50939 )
+
+[node name="Spatial" parent="LightFixture5" index="1"]
+transform = Transform( 0.809322, 0.587324, 0.00694622, -0.586653, 0.808866, -0.0396847, -0.0289263, 0.0280427, 0.999188, -0.0289917, -1.2, 0.00799942 )
+
+[node name="SpotLight" parent="LightFixture5/Spatial" index="2"]
+transform = Transform( -1.37091e-06, 2.38419e-07, -5, -5.96046e-08, 5, 5.92321e-07, 5, -2.98023e-08, -1.43051e-06, 1.91407, -0.174942, 0 )
+
+[node name="LightFixture6" parent="." index="65" instance=ExtResource( 5 )]
+transform = Transform( 0.198648, 0, -0.0232184, 0, 0.2, 0, 0.0232184, 0, 0.198648, 7.78276, 5.41438, -10.7112 )
+
+[node name="Spatial" parent="LightFixture6" index="1"]
+transform = Transform( 0.561838, 0.827247, -7.45058e-09, -0.827247, 0.561838, 0, 7.45058e-09, 7.45058e-09, 1, -0.0289917, -1.2, 0.00800323 )
+
+[node name="SpotLight" parent="LightFixture6/Spatial" index="2"]
+transform = Transform( -1.37091e-06, 2.38419e-07, -5, -5.96046e-08, 5, 5.92321e-07, 5, -2.98023e-08, -1.43051e-06, 1.91407, -0.174942, 0 )
+
+[node name="WaterDisplay" parent="." index="66" instance=ExtResource( 7 )]
+
+[node name="WaterPlane" parent="WaterDisplay" index="0"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 13.415, -0.0569307, -1.66657 )
+use_in_baked_light = true
+
+[node name="SurfacePlane" parent="WaterDisplay" index="1"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 13.415, -0.453211, -1.66657 )
+use_in_baked_light = true
+
+[node name="MeshInstance3" parent="WaterDisplay" index="2"]
+visible = false
+
+[node name="MeshInstance" parent="WaterDisplay" index="5"]
+visible = false
+
+[node name="PortalA" parent="." index="67" instance=ExtResource( 8 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5.97953, 1.89692, 0.132337 )
+mesh = SubResource( 3 )
+other_portal_path = NodePath("../PortalB")
+
+[node name="PortalB" parent="." index="68" instance=ExtResource( 8 )]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -26.0515, -1.72872, 13.2132 )
+mesh = SubResource( 2 )
+current = false
+other_portal_path = NodePath("../PortalA")
+
+[editable path="Player"]
+[editable path="LightFixture2"]
+[editable path="LightFixture3"]
+[editable path="LightFixture4"]
+[editable path="LightFixture5"]
+[editable path="LightFixture6"]
+[editable path="WaterDisplay"]

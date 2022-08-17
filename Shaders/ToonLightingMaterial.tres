@@ -1,0 +1,29 @@
+[gd_resource type="ShaderMaterial" load_steps=3 format=2]
+
+[ext_resource path="res://Assets/prototypes/Orange/texture_01.png" type="Texture" id=1]
+
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+uniform sampler2D u_texture;
+uniform int u_cuts = 1;
+
+void fragment() {
+    vec4 color = texture(u_texture, UV);
+    ALBEDO = vec3(1, 0, 0);
+}
+
+void light() {
+//    float cuts = float(u_cuts) + 1.0;
+    float NdotL = clamp(dot(NORMAL, LIGHT), 0, 1);
+//    float i = ceil(NdotL * float(cuts)) / float(cuts);
+//    if (i == 0.0) i = 1.0 / float(cuts);
+    float toon = smoothstep(0.45, 0.55, NdotL);
+//    DIFFUSE_LIGHT = ALBEDO * i;
+    DIFFUSE_LIGHT = mix(ALBEDO * .6, ALBEDO, toon);
+}"
+
+[resource]
+shader = SubResource( 1 )
+shader_param/u_cuts = 3
+shader_param/u_texture = ExtResource( 1 )
