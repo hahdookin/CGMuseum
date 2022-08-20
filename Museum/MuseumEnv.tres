@@ -2,7 +2,7 @@
 
 [resource]
 background_mode = 1
-background_color = Color( 0.811765, 0.872059, 1, 1 )
+background_color = Color( 0.4, 0.545098, 0.882353, 1 )
 background_energy = 0.0
 ambient_light_color = Color( 0.337255, 0.337255, 0.337255, 1 )
 tonemap_mode = 2

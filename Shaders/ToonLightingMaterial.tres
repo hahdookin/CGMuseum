@@ -14,13 +14,13 @@ void fragment() {
 }
 
 void light() {
-//    float cuts = float(u_cuts) + 1.0;
+    float cuts = float(u_cuts) + 1.0;
     float NdotL = clamp(dot(NORMAL, LIGHT), 0, 1);
-//    float i = ceil(NdotL * float(cuts)) / float(cuts);
-//    if (i == 0.0) i = 1.0 / float(cuts);
+    float i = ceil(NdotL * float(cuts)) / float(cuts);
+    if (i == 0.0) i = 1.0 / float(cuts);
     float toon = smoothstep(0.45, 0.55, NdotL);
-//    DIFFUSE_LIGHT = ALBEDO * i;
-    DIFFUSE_LIGHT = mix(ALBEDO * .6, ALBEDO, toon);
+    DIFFUSE_LIGHT = ALBEDO * i;
+//    DIFFUSE_LIGHT = mix(ALBEDO * .6, ALBEDO, toon);
 }"
 
 [resource]

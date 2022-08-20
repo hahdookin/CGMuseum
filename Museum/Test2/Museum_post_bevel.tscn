@@ -1,4 +1,4 @@
-[gd_scene load_steps=15 format=2]
+[gd_scene load_steps=23 format=2]
 
 [ext_resource path="res://Museum/Test2/Museum_post_bevel.glb" type="PackedScene" id=1]
 [ext_resource path="res://Museum/MuseumEnv.tres" type="Environment" id=2]
@@ -6,8 +6,12 @@
 [ext_resource path="res://Museum/Test2/Museum_post_bevel.lmbake" type="BakedLightmapData" id=4]
 [ext_resource path="res://Museum/LightFixture/LightFixture.tscn" type="PackedScene" id=5]
 [ext_resource path="res://Museum/LightBar/LightBar.tscn" type="PackedScene" id=6]
-[ext_resource path="res://Water.tscn" type="PackedScene" id=7]
+[ext_resource path="res://Museum/Water.tscn" type="PackedScene" id=7]
 [ext_resource path="res://Portal/PortalInstance.tscn" type="PackedScene" id=8]
+[ext_resource path="res://InformationLabel/InformationLabel.tscn" type="PackedScene" id=9]
+[ext_resource path="res://Museum/Field/Field.tscn" type="PackedScene" id=10]
+[ext_resource path="res://Museum/River.tscn" type="PackedScene" id=11]
+[ext_resource path="res://Museum/Displays.tscn" type="PackedScene" id=12]
 
 [sub_resource type="Shader" id=62]
 code = "shader_type canvas_item;
@@ -41,41 +45,312 @@ size = Vector2( 2, 2 )
 [sub_resource type="CubeMesh" id=2]
 resource_local_to_scene = true
 
+[sub_resource type="Shader" id=1]
+code = "shader_type spatial;
+
+//render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+
+uniform int u_iterations = 3; // Number of rectangles to draw
+uniform bool u_cycle_back = false;
+uniform float u_speed = 1.0; // Speed at which the animation happens
+uniform float u_precision_correction = 0.01;
+uniform float u_border_scale : hint_range(0, 1) = 1.0; // Border width is border_scale/iterations
+uniform vec4 u_background_color : hint_color = vec4(vec3(0), 1); // Color of pixels not in a rectangle
+uniform vec4 u_start_color : hint_color = vec4(1, 0, 0, 1);
+uniform vec4 u_end_color : hint_color = vec4(0, 0, 1, 1);
+
+uniform float u_fade_y : hint_range(0, 1) = 1.0;
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))*
+        43758.5453123);
+}
+
+// Determine whether fragment is in a rectangle
+// st -> fragment position in st coords ((0, 0) is bottom left, (1, 1) is top right)
+// pos -> rectangle's starting position in st coords
+// size -> rectangle's width & height
+// border -> border thickness of rectangle
+bool in_rectangle(vec2 st, vec2 pos, vec2 size, float border) {
+    vec2 inner_pos = pos + border;
+    vec2 inner_size = size - border * 2.0;
+    if (st.x >= pos.x && st.x <= pos.x + size.x && 
+        st.y >= pos.y && st.y <= pos.y + size.y) {
+        // Check if fragment is not in the inner rect formed by the border
+        if (!(st.x >= inner_pos.x && st.x <= inner_pos.x + inner_size.x && 
+        st.y >= inner_pos.y && st.y <= inner_pos.y + inner_size.y))
+            return true;
+    }
+    return false;
+}
+
+void fragment() {
+//    vec3 cam_world_pos = (CAMERA_MATRIX * vec4(vec3(0), 1.0)).xyz;
+//    vec3 vert_world_pos = (CAMERA_MATRIX * vec4(VERTEX, 1.0)).xyz;
+//    float dist_from_camera = distance(cam_world_pos, vert_world_pos);
+    
+    vec2 st = vec2(UV.x, 1.0 - UV.y); // (0, 0) BL (1, 1) TR
+    
+    // Create grid
+    st *= u_plane_size * u_scale;
+    float odd_row = step(1., mod(st.y,2.0));
+    float odd_col = step(1., mod(st.x,2.0));
+    vec2 ipos = floor(st);  // get the integer coords
+    st = fract(st);
+    // Rotate each grid
+    st = rotate2d(u_rotation_degrees * 3.14159 / 180.0) * (st - vec2(0.5)) + vec2(0.5);
+    
+    //vec2 fpos = fract(st);  // get the fractional coords
+
+	vec3 color = u_background_color.rgb;
+    // iters is n if not cycling back, otherwise its (n - 1) * 2
+    int iters = (1 - int(u_cycle_back)) * u_iterations + int(u_cycle_back) * (u_iterations - 1) * 2;
+    for (int i = 0; i < iters; i++) {
+        // Basically, size grows from 0 -> 1 while pos shrinks from 0.5 -> 0
+        // Shrinking equation: 0.5 - mod(s * x + i/n, 1) / 2.0
+        // Growing equation:   mod(s * x + i/n, 1)
+        float offset = float(i) / float(iters);
+        float progress = mod((TIME * u_speed + offset), 1); // mod(s * x + i/n, 1), goes from 0 -> 1
+        vec2 pos = vec2(0.5) - progress;
+        vec2 size = vec2(progress * 2.0);
+//        vec2 pos = vec2(0.5) - progress/2.0;
+//        vec2 size = vec2(progress);
+        float border = (1.0 / float(iters) + u_precision_correction) * u_border_scale;
+        bool in_rect = in_rectangle(st, pos, size, border);
+        
+        float color_offset = float(i) / float(iters - 1);
+        color = mix(u_start_color, u_end_color, color_offset).rgb * float(in_rect) + u_background_color.rgb * (1.0 - float(in_rect));
+        // Do color stuff
+        if (u_cycle_back) {
+            if (i <= iters / 2)
+                color = mix(u_start_color, u_end_color, float(i) / (float(u_iterations - 1))).rgb;
+            else
+                color = mix(u_end_color, u_start_color, (float(i) - float(iters) / 2.0) / (float(u_iterations - 1))).rgb;
+            if (!in_rect) {
+                color = u_background_color.rgb;
+            }
+        }
+        
+        if (in_rect) 
+            break;
+    }
+
+    ALBEDO = color;
+    
+    float fade_ipos = floor(u_fade_y * u_plane_size.y * u_scale.y);
+    float fade_fpos = fract(u_fade_y * u_plane_size.y * u_scale.y);
+    if (ipos.y > fade_ipos) ALBEDO = u_background_color.rgb;
+    else if (ipos.y < fade_ipos) ALBEDO = color;
+    else {
+        ALBEDO = mix(color, u_background_color.rgb, 1.0 - fade_fpos)
+    }
+}
+"
+
+[sub_resource type="ShaderMaterial" id=63]
+shader = SubResource( 1 )
+shader_param/u_plane_size = Vector2( 8, 4 )
+shader_param/u_scale = Vector2( 2, 1 )
+shader_param/u_rotation_degrees = 45.0
+shader_param/u_iterations = 3
+shader_param/u_cycle_back = true
+shader_param/u_speed = 0.2
+shader_param/u_precision_correction = 0.0
+shader_param/u_border_scale = 0.195
+shader_param/u_background_color = Color( 0, 0, 0, 1 )
+shader_param/u_start_color = Color( 0.054902, 0, 1, 1 )
+shader_param/u_end_color = Color( 0.568627, 1, 0, 1 )
+shader_param/u_fade_y = 1.0
+
+[sub_resource type="Shader" id=12]
+code = "shader_type spatial;
+
+//render_mode unshaded;
+
+uniform vec2 u_plane_size;
+uniform vec2 u_scale = vec2(1.0);
+uniform float u_rotation_degrees = 0.0;
+
+uniform int u_iterations = 3; // Number of rectangles to draw
+uniform bool u_cycle_back = false;
+uniform float u_speed = 1.0; // Speed at which the animation happens
+uniform float u_precision_correction = 0.01;
+uniform float u_border_scale : hint_range(0, 1) = 1.0; // Border width is border_scale/iterations
+uniform vec4 u_background_color : hint_color = vec4(vec3(0), 1); // Color of pixels not in a rectangle
+uniform vec4 u_start_color : hint_color = vec4(1, 0, 0, 1);
+uniform vec4 u_end_color : hint_color = vec4(0, 0, 1, 1);
+
+uniform float u_fade_y : hint_range(0, 1) = 1.0;
+
+// Get a rotation matrix
+mat2 rotate2d(float _angle){
+    return mat2(
+        vec2(cos(_angle),-sin(_angle)),
+        vec2(sin(_angle),cos(_angle))
+    );
+}
+
+float random (vec2 st) {
+    return fract(sin(dot(st.xy,
+                         vec2(12.9898,78.233)))*
+        43758.5453123);
+}
+
+// Determine whether fragment is in a rectangle
+// st -> fragment position in st coords ((0, 0) is bottom left, (1, 1) is top right)
+// pos -> rectangle's starting position in st coords
+// size -> rectangle's width & height
+// border -> border thickness of rectangle
+bool in_rectangle(vec2 st, vec2 pos, vec2 size, float border) {
+    vec2 inner_pos = pos + border;
+    vec2 inner_size = size - border * 2.0;
+    if (st.x >= pos.x && st.x <= pos.x + size.x && 
+        st.y >= pos.y && st.y <= pos.y + size.y) {
+        // Check if fragment is not in the inner rect formed by the border
+        if (!(st.x >= inner_pos.x && st.x <= inner_pos.x + inner_size.x && 
+        st.y >= inner_pos.y && st.y <= inner_pos.y + inner_size.y))
+            return true;
+    }
+    return false;
+}
+
+void fragment() {
+//    vec3 cam_world_pos = (CAMERA_MATRIX * vec4(vec3(0), 1.0)).xyz;
+//    vec3 vert_world_pos = (CAMERA_MATRIX * vec4(VERTEX, 1.0)).xyz;
+//    float dist_from_camera = distance(cam_world_pos, vert_world_pos);
+    
+    vec2 st = vec2(UV.x, 1.0 - UV.y); // (0, 0) BL (1, 1) TR
+    
+    // Create grid
+    st *= u_plane_size * u_scale;
+    float odd_row = step(1., mod(st.y,2.0));
+    float odd_col = step(1., mod(st.x,2.0));
+    vec2 ipos = floor(st);  // get the integer coords
+    st = fract(st);
+    // Rotate each grid
+    st = rotate2d(u_rotation_degrees * 3.14159 / 180.0) * (st - vec2(0.5)) + vec2(0.5);
+    
+    //vec2 fpos = fract(st);  // get the fractional coords
+
+	vec3 color = u_background_color.rgb;
+    // iters is n if not cycling back, otherwise its (n - 1) * 2
+    int iters = (1 - int(u_cycle_back)) * u_iterations + int(u_cycle_back) * (u_iterations - 1) * 2;
+    for (int i = 0; i < iters; i++) {
+        // Basically, size grows from 0 -> 1 while pos shrinks from 0.5 -> 0
+        // Shrinking equation: 0.5 - mod(s * x + i/n, 1) / 2.0
+        // Growing equation:   mod(s * x + i/n, 1)
+        float offset = float(i) / float(iters);
+        float progress = mod((TIME * u_speed + offset), 1); // mod(s * x + i/n, 1), goes from 0 -> 1
+        vec2 pos = vec2(0.5) - progress;
+        vec2 size = vec2(progress * 2.0);
+//        vec2 pos = vec2(0.5) - progress/2.0;
+//        vec2 size = vec2(progress);
+        float border = (1.0 / float(iters) + u_precision_correction) * u_border_scale;
+        bool in_rect = in_rectangle(st, pos, size, border);
+        
+        float color_offset = float(i) / float(iters - 1);
+        color = mix(u_start_color, u_end_color, color_offset).rgb * float(in_rect) + u_background_color.rgb * (1.0 - float(in_rect));
+        // Do color stuff
+        if (u_cycle_back) {
+            if (i <= iters / 2)
+                color = mix(u_start_color, u_end_color, float(i) / (float(u_iterations - 1))).rgb;
+            else
+                color = mix(u_end_color, u_start_color, (float(i) - float(iters) / 2.0) / (float(u_iterations - 1))).rgb;
+            if (!in_rect) {
+                color = u_background_color.rgb;
+            }
+        }
+        
+        if (in_rect) 
+            break;
+    }
+
+    ALBEDO = color;
+    
+    float fade_ipos = floor(u_fade_y * u_plane_size.y * u_scale.y);
+    float fade_fpos = fract(u_fade_y * u_plane_size.y * u_scale.y);
+    if (ipos.y > fade_ipos) ALBEDO = u_background_color.rgb;
+    else if (ipos.y < fade_ipos) ALBEDO = color;
+    else {
+        ALBEDO = mix(color, u_background_color.rgb, 1.0 - fade_fpos)
+    }
+}
+"
+
+[sub_resource type="ShaderMaterial" id=64]
+shader = SubResource( 12 )
+shader_param/u_plane_size = Vector2( 1, 2 )
+shader_param/u_scale = Vector2( 2, 2 )
+shader_param/u_rotation_degrees = 0.0
+shader_param/u_iterations = 5
+shader_param/u_cycle_back = true
+shader_param/u_speed = 0.22
+shader_param/u_precision_correction = 0.0
+shader_param/u_border_scale = 0.887
+shader_param/u_background_color = Color( 1, 1, 1, 1 )
+shader_param/u_start_color = Color( 0, 0.929412, 1, 1 )
+shader_param/u_end_color = Color( 1, 0, 0.937255, 1 )
+shader_param/u_fade_y = 1.0
+
 [node name="Museum_post_bevel" instance=ExtResource( 1 )]
 
-[node name="Display_25x25x4" parent="." index="9"]
+[node name="StairwellMiddle" parent="." index="5"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 2, -11.7187, 1.32585, 4.35671 )
+
+[node name="Bench" parent="." index="10"]
+transform = Transform( -3.14315e-06, 0, -1, 0, 1, 0, 1, 0, -3.14315e-06, 1.99877, 0.381227, -10.7967 )
+
+[node name="Display_25x25x4" parent="." index="12"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 2.37612, 0, 0 )
 
-[node name="DisplayCase" parent="." index="11"]
+[node name="DisplayCase" parent="." index="14"]
 transform = Transform( -0.866025, -0.5, 8.15666e-08, -0.5, 0.866025, 2.18557e-08, -8.15666e-08, -2.18557e-08, -1, -0.0310817, 1.07164, -12.918 )
 
-[node name="Display_375x375x45" parent="." index="13"]
+[node name="Display_375x375x45" parent="." index="16"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 22.1434, 0.665407, -3.9116 )
 
-[node name="body" parent="." index="14"]
+[node name="body" parent="." index="17"]
 transform = Transform( -0.000251329, -0.00398823, 1.31004e-09, 1.19094e-10, -1.90551e-09, -0.00399614, 0.00398823, -0.000251329, 0, 10.1384, 1.27177, -10.3169 )
 
-[node name="body001" parent="." index="15"]
+[node name="body001" parent="." index="18"]
 transform = Transform( -0.000251329, -0.00398823, 1.31004e-09, 1.19094e-10, -1.90551e-09, -0.00399614, 0.00398823, -0.000251329, 0, 10.1384, 1.27177, -10.3169 )
 
-[node name="collar" parent="." index="16"]
+[node name="collar" parent="." index="19"]
 transform = Transform( -0.000251329, -0.00398823, 1.31004e-09, 1.19094e-10, -1.90551e-09, -0.00399614, 0.00398823, -0.000251329, 0, 10.1384, 1.27177, -10.3169 )
 
-[node name="head" parent="." index="17"]
+[node name="head" parent="." index="20"]
 transform = Transform( -0.000251329, -0.00398823, 1.31004e-09, 1.19094e-10, -1.90551e-09, -0.00399614, 0.00398823, -0.000251329, 0, 10.1893, 1.28957, -10.3137 )
 
-[node name="Ceiling" parent="." index="22"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.59505, -8.33976 )
+[node name="Ceiling" parent="." index="25"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 5.55036, -8.33976 )
+visible = false
+
+[node name="Sidewalk2" parent="." index="30"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -39.2806, -4.24184, 17.3859 )
 
 [node name="DirectionalLight" type="DirectionalLight" parent="." index="49"]
 transform = Transform( 0.0257218, 0.955459, -0.294001, -0.0832738, 0.295124, 0.951823, 0.996195, -2.24371e-08, 0.0871558, -22.1167, 26.7325, -14.2 )
+visible = false
 light_indirect_energy = 1.5
+light_cull_mask = 4294966783
 shadow_enabled = true
 
 [node name="BakedLightmap" type="BakedLightmap" parent="." index="50"]
 transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5.3468, 3.4071, -8.36546 )
 extents = Vector3( 20.6191, 6.93196, 20.8206 )
-quality = 3
 bounces = 2
 bounce_indirect_energy = 0.5
 environment_mode = 3
@@ -111,9 +386,9 @@ transform = Transform( -1.0411e-07, 0, -0.2, 0, 0.2, 0, 0.2, 0, -1.0411e-07, -6.
 transform = Transform( -1.0411e-07, 0, -0.2, 0, 0.2, 0, 0.2, 0, -1.0411e-07, -3.59597, 5.16897, 1.28886 )
 
 [node name="Player" parent="." index="60" instance=ExtResource( 3 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35022, 1.40092, -18.2497 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 1.35022, 1.23157, -18.2497 )
 
-[node name="TextureRect" parent="Player" index="5"]
+[node name="TextureRect" parent="Player" index="0"]
 material = SubResource( 56 )
 texture = SubResource( 57 )
 
@@ -164,31 +439,82 @@ transform = Transform( 0.561838, 0.827247, -7.45058e-09, -0.827247, 0.561838, 0,
 transform = Transform( -1.37091e-06, 2.38419e-07, -5, -5.96046e-08, 5, 5.92321e-07, 5, -2.98023e-08, -1.43051e-06, 1.91407, -0.174942, 0 )
 
 [node name="WaterDisplay" parent="." index="66" instance=ExtResource( 7 )]
-
-[node name="WaterPlane" parent="WaterDisplay" index="0"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 13.415, -0.0569307, -1.66657 )
-use_in_baked_light = true
-
-[node name="SurfacePlane" parent="WaterDisplay" index="1"]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 13.415, -0.453211, -1.66657 )
-use_in_baked_light = true
-
-[node name="MeshInstance3" parent="WaterDisplay" index="2"]
-visible = false
-
-[node name="MeshInstance" parent="WaterDisplay" index="5"]
-visible = false
+transform = Transform( -3.14315e-06, 0, 1, 0, 1, 0, -1, 0, -3.14315e-06, 13.3555, -0.0488898, -1.85839 )
 
 [node name="PortalA" parent="." index="67" instance=ExtResource( 8 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 5.97953, 1.89692, 0.132337 )
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 6.27491, 1.89692, 0.132337 )
 mesh = SubResource( 3 )
 other_portal_path = NodePath("../PortalB")
 
 [node name="PortalB" parent="." index="68" instance=ExtResource( 8 )]
-transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -26.0515, -1.72872, 13.2132 )
+transform = Transform( -1, 0, -6.28631e-06, 0, 1, 0, 6.28631e-06, 0, -1, 33.8966, 2.22499, 11.8187 )
 mesh = SubResource( 2 )
 current = false
 other_portal_path = NodePath("../PortalA")
+
+[node name="HypnoLabel" parent="." index="69" instance=ExtResource( 9 )]
+transform = Transform( -8.74228e-09, 0, -0.2, 0, 0.2, 0, 0.2, 0, -8.74228e-09, 9.78061, 1.05889, -10.3462 )
+
+[node name="LightBar9" parent="." index="70" instance=ExtResource( 6 )]
+transform = Transform( -0.1, 0, 6.28631e-07, 0, 0.1, 0, -6.28631e-07, 0, -0.1, -12.0076, 6.43546, 2.65438 )
+
+[node name="OmniLight" parent="LightBar9" index="0"]
+light_energy = 0.01
+light_specular = 0.0
+
+[node name="LightBar10" parent="." index="71" instance=ExtResource( 6 )]
+transform = Transform( -0.1, 0, 6.28631e-07, 0, 0.1, 0, -6.28631e-07, 0, -0.1, -11.7765, 1.08433, 3.58662 )
+
+[node name="OmniLight" parent="LightBar10" index="0"]
+light_energy = 0.01
+light_specular = 0.0
+
+[node name="LightBar11" parent="." index="72" instance=ExtResource( 6 )]
+transform = Transform( -0.1, 0, 6.28631e-07, 0, 0.1, 0, -6.28631e-07, 0, -0.1, -11.6189, 3.52767, -3.68694 )
+
+[node name="OmniLight" parent="LightBar11" index="0"]
+light_energy = 0.01
+light_specular = 0.0
+
+[node name="Field" parent="." index="76" instance=ExtResource( 10 )]
+transform = Transform( 10, 0, 0, 0, 10, 0, 0, 0, 10, 33.5018, -1.86979, 21.2167 )
+
+[node name="River" parent="." index="77" instance=ExtResource( 11 )]
+transform = Transform( 2, 0, 0, 0, 1, 0, 0, 0, 2, -34.6741, -6.10081, -14.535 )
+
+[node name="Displays" parent="." index="78" instance=ExtResource( 12 )]
+
+[node name="square_frame2" parent="Displays" index="0"]
+transform = Transform( 0.5, 0, 5.32907e-15, 0, 0.5, 0, -5.32907e-15, 0, 0.5, -9.45998, 2.29748, -0.0938603 )
+
+[node name="NoiseDisplay" parent="Displays" index="1"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, -0.0433365, 0, 0.149234 )
+
+[node name="Spatial2" parent="Displays/NoiseDisplay" index="0"]
+transform = Transform( -1.09278e-08, 0, -0.25, 0, 0.25, 0, 0.25, 0, -1.09278e-08, 1.11026, 1.4479, 2.71282 )
+
+[node name="rect_frame" parent="Displays/NoiseDisplay" index="1"]
+transform = Transform( -0.4, 0, -6.03983e-08, 0, 0.4, 0, 6.03983e-08, 0, -0.4, 1.11, 1.953, -0.21 )
+
+[node name="rect_frame2" parent="Displays/LayDisplay" index="0"]
+transform = Transform( -0.05, 0.0866025, 8.74228e-09, 0.0866025, 0.05, 0, -4.37114e-09, 7.57103e-09, -0.1, -0.021158, 1.08052, -12.3489 )
+material = SubResource( 63 )
+
+[node name="flat_square_canvas" parent="Displays/LayDisplay" index="1"]
+transform = Transform( -0.25, 0.433013, -4.37114e-08, 0.433013, 0.25, 0, 2.18557e-08, -3.78552e-08, -0.5, -0.0370886, 1.04058, -13.5372 )
+
+[node name="GrowingRectsDisplay" parent="Displays" index="3"]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -0.12751 )
+
+[node name="Spatial3" parent="Displays/GrowingRectsDisplay" index="0"]
+transform = Transform( -0.25, 0, 2.18556e-08, 0, 0.25, 0, -2.18556e-08, 0, -0.25, -7.74638, 1.4479, 4.7003 )
+
+[node name="square_frame" parent="Displays/GrowingRectsDisplay" index="1"]
+transform = Transform( -2.18557e-08, 0, 0.5, 0, 0.5, 0, -0.5, 0, -2.18557e-08, -4.48802, 2.29748, 4.5268 )
+
+[node name="flat_square_canvas" parent="Displays/GrowingRectsDisplay" index="2"]
+transform = Transform( -4.37114e-08, 0, 1, 0, 1, 0, -1, 0, -4.37114e-08, -4.27853, 2.24598, 4.64926 )
+material = SubResource( 64 )
 
 [editable path="Player"]
 [editable path="LightFixture2"]
@@ -196,4 +522,7 @@ other_portal_path = NodePath("../PortalA")
 [editable path="LightFixture4"]
 [editable path="LightFixture5"]
 [editable path="LightFixture6"]
-[editable path="WaterDisplay"]
+[editable path="LightBar9"]
+[editable path="LightBar10"]
+[editable path="LightBar11"]
+[editable path="Displays"]

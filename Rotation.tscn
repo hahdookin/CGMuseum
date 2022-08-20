@@ -1,0 +1,65 @@
+[gd_scene load_steps=9 format=2]
+
+[ext_resource path="res://Rotation.gd" type="Script" id=1]
+
+[sub_resource type="CubeMesh" id=1]
+size = Vector3( 0.75, 2, 0.1 )
+subdivide_width = 32
+subdivide_height = 32
+
+[sub_resource type="Shader" id=2]
+code = "shader_type spatial;
+
+uniform sampler2D u_noise;
+uniform float u_rotation_amount = 0.0;
+
+mat3 rot_y(float a) {
+    return mat3(vec3(cos(a), 0, sin(a)), vec3(0,1,0), vec3(-sin(a), 0, cos(a)));
+}
+
+void vertex() {
+    vec3 wind_dir = vec3(0, 0, -1) * rot_y(-u_rotation_amount);
+    float height = (VERTEX.y + 1.0) / 2.0; // For a 2x2 plane centered at origin
+    float wind_speed = texture(u_noise, vec2(TIME * 0.1, 0)).r;
+    VERTEX += wind_dir * height * wind_speed * 5.0;
+}"
+
+[sub_resource type="OpenSimplexNoise" id=4]
+lacunarity = 0.1
+
+[sub_resource type="NoiseTexture" id=5]
+seamless = true
+noise = SubResource( 4 )
+
+[sub_resource type="ShaderMaterial" id=6]
+shader = SubResource( 2 )
+shader_param/u_rotation_amount = 0.0
+shader_param/u_noise = SubResource( 5 )
+
+[sub_resource type="ShaderMaterial" id=7]
+shader = SubResource( 2 )
+shader_param/u_rotation_amount = 1.49711
+shader_param/u_noise = SubResource( 5 )
+
+[sub_resource type="ShaderMaterial" id=8]
+shader = SubResource( 2 )
+shader_param/u_rotation_amount = 0.313619
+shader_param/u_noise = SubResource( 5 )
+
+[node name="Spatial" type="Spatial"]
+script = ExtResource( 1 )
+
+[node name="MeshInstance" type="MeshInstance" parent="."]
+transform = Transform( 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 0 )
+mesh = SubResource( 1 )
+material/0 = SubResource( 6 )
+
+[node name="MeshInstance2" type="MeshInstance" parent="."]
+transform = Transform( 0.0736212, 0, 0.997286, 0, 1, 0, -0.997286, 0, 0.0736212, -3.72958, 0, -2.1009 )
+mesh = SubResource( 1 )
+material/0 = SubResource( 7 )
+
+[node name="MeshInstance3" type="MeshInstance" parent="."]
+transform = Transform( 0.951224, 0, 0.308503, 0, 1, 0, -0.308503, 0, 0.951224, 2.43434, 0, 0 )
+mesh = SubResource( 1 )
+material/0 = SubResource( 8 )
